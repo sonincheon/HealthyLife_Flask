@@ -16,13 +16,13 @@ conn = mysql.connector.connect(**db_config)
 cursor = conn.cursor()
 
 # food 테이블에서 모든 음식의 name 가져오기
-query = "SELECT name FROM food_tb"
+query = "SELECT name FROM exercise_tb"
 cursor.execute(query)
-foods = cursor.fetchall()
+exercises = cursor.fetchall()
 
 # 각 음식에 대한 이미지 URL 추출
-for food in foods:
-    name = food[0]
+for exercise in exercises:
+    name = exercise[0]
     url = f'https://search.daum.net/search?w=img&nil_search=btn&DA=NTB&enc=utf8&q={name}'
 
     headers = {
@@ -40,7 +40,7 @@ for food in foods:
         print(f"{name}: {image_url}")
 
         # 이미지 URL을 해당하는 name에 맞춰 업데이트
-        update_query = "UPDATE food_tb SET image = %s WHERE name = %s"
+        update_query = "UPDATE exercise_tb SET image = %s WHERE name = %s"
         update_data = (image_url, name)
         cursor.execute(update_query, update_data)
         conn.commit()
