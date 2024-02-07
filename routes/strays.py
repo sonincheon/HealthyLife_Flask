@@ -13,7 +13,6 @@ def parsing_healthy_medicines(key_word=None):
     }
     int_page = 1
     medicine_list = []
-
     print("크롤링 시작 ! ! ! ! !")
     while True:
         for attempt in range(3):
@@ -29,7 +28,6 @@ def parsing_healthy_medicines(key_word=None):
                     int_page += 1
                     continue
                 time.sleep(5)  # 재시도 간 간단한 지연
-
         soup = BeautifulSoup(res.text, 'html.parser')
         print(soup)
         no_content = soup.find('div', string=lambda text: text and '검색결과가 없습니다.' in text)

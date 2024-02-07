@@ -1,40 +1,44 @@
-from flask import Flask, render_template, logging
+from flask import Flask, request, jsonify
 from flask_cors import CORS
-
-import eventlet
-import eventlet.wsgi
-import ssl
-# 라우트 파일 가져오기
-from routes.weather import get_weather
-from routes.hourly_weather import get_hourly_weather
-from routes.strays import parsing_strays
-
-# from dao.stray_dao import insert_strays
+import pandas as pd
+import joblib
 
 app = Flask(__name__)
 CORS(app, origins=['*'])
 
-
-# 로깅 설정
-# logging.basicConfig(level=logging.DEBUG)
-
-# 홈페이지 라우트
-@app.route('/')
-def home():
-    return render_template("index.html")  # index.html 파일을 렌더링
+# 모델 불러오기
+loaded_model = joblib.load('./routes/life_expectancy_model.joblib1')
 
 
-# # 날씨 API 라우트
-# app.add_url_rule('/api/weather2', 'get_weather', get_weather, methods=['GET'])
-# app.add_url_rule('/api/hourly_weather', 'get_hourly_weather', get_hourly_weather, methods=['GET'])
-app.add_url_rule('/api/strays', 'parsing_strays', parsing_strays, methods=['GET'])
+@app.route('/predict', methods=['POST'])
+def predict():
+    try:
+        # 클라이언트로부터 JSON 형식의 데이터를 받음
+        data = request.get_json()
+        print(data)
 
-# 스케줄러 작업 정의
-# def strays_task():
-#     print('스케줄러 작동 시작...')
-#     result = parsing_strays()
-#     insert_strays(result)
+        # 받은 데이터를 DataFrame으로 변환
+        try:
+            new_data = pd.DataFrame(data, index=[0])  # 인덱스를 [0]으로 지정
+            print("DataFrame from JSON:", new_data)
+        except Exception as e:
+            print("Error creating DataFrame:", str(e))
+
+        # 특성 선택: AdultMortality와 BMI만 사용
+        new_data = new_data[['AdultMortality', 'BMI']]
+        print(new_data)
+
+        # 모델로 예측
+        predictions = loaded_model.predict(new_data)
+
+        # 예측 결과를 JSON 형식으로 반환
+        response = {'predictions': predictions.tolist()}
+        return jsonify(response)
+
+    except Exception as e:
+        # 예외가 발생하면 에러 메시지 반환
+        return jsonify({'error': str(e)})
 
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=True, use_reloader=False)
